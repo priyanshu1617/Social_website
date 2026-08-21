@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Images{% endblock %}
+
+{% block content %}
+
+  <div class="page-header">
+    <h1>Images</h1>
+    <a href="{% url 'images:ranking' %}" class="button" style="padding:8px 18px;font-size:0.82rem">
+      Ranking
+    </a>
+  </div>
+
+  <div id="image-list">
+    {% include "images/image/list_images.html" %}
+  </div>
+
+  <div id="load-spinner">
+    <div class="spinner"></div>
+    <p>Loading more…</p>
+  </div>
+  <div id="end-of-feed">You've seen everything!</div>
+
+{% endblock %}
+
+{% block domready %}
+  var page = 1;
+  var emptyPage = false;
+  var blockRequest = false;
+  var spinner = document.getElementById('load-spinner');
+  var endMsg  = document.getElementById('end-of-feed');
+
+  window.addEventListener('scroll', function() {
+    var margin = document.body.clientHeight - window.innerHeight - 300;
+    if (window.pageYOffset > margin && !emptyPage && !blockRequest) {
+      blockRequest = true;
+      page += 1;
+      spinner.style.display = 'block';
+      fetch('?images_only=1&page=' + page)
+        .then(function(response) {
+          if (response.status === 200) return response.text();
+          emptyPage = true;
+          spinner.style.display = 'none';
+          endMsg.style.display = 'block';
+        })
+        .then(function(html) {
+          if (!html || html.trim() === '') {
+            emptyPage = true;
+            spinner.style.display = 'none';
+            endMsg.style.display = 'block';
+          } else {
+            document.getElementById('image-list').insertAdjacentHTML('beforeend', html);
+            blockRequest = false;
+            spinner.style.display = 'none';
+          }
+        });
+    }
+  });
+{% endblock %}

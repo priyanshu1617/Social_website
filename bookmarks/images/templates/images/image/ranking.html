@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Images ranking{% endblock %}
+
+{% block content %}
+
+  <div class="page-header">
+    <h1>Top Images</h1>
+    <a href="{% url 'images:list' %}" class="button" style="padding:8px 18px;font-size:0.82rem">
+      ← All Images
+    </a>
+  </div>
+
+  <span class="section-label">Most viewed images</span>
+
+  <div class="ranking-list">
+    {% for image in most_viewed %}
+      <a href="{{ image.get_absolute_url }}" class="ranking-item">
+        <span class="rank-number {% if forloop.counter == 1 %}r1{% elif forloop.counter == 2 %}r2{% elif forloop.counter == 3 %}r3{% endif %}">
+          #{{ forloop.counter }}
+        </span>
+        <span class="rank-title">{{ image.title }}</span>
+      </a>
+    {% empty %}
+      <div class="empty-state">
+        <h3>No views yet</h3>
+        <p>Visit some <a href="{% url 'images:list' %}">images</a> to start building the ranking.</p>
+      </div>
+    {% endfor %}
+  </div>
+
+{% endblock %}

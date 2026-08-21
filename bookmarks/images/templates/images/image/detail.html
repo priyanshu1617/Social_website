@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}{{ image.title }}{% endblock %}
+
+{% block content %}
+  {% load thumbnail %}
+
+  <div style="margin-bottom:1.25rem">
+    <a href="{% url 'images:list' %}" style="font-size:0.85rem;color:var(--text-muted)">← Back to Images</a>
+  </div>
+
+  <div class="image-detail-layout">
+
+    <div class="img-main">
+      <a href="{{ image.image.url }}" target="_blank" rel="noopener">
+        <img src="{% thumbnail image.image 500x0 %}" alt="{{ image.title }}">
+      </a>
+    </div>
+
+    <div class="image-meta">
+      <h1>{{ image.title }}</h1>
+
+      {% with total_likes=image.users_like.count users_like=image.users_like.all %}
+        <div class="image-stats">
+          <span class="stat-badge"><span class="total-likes">{{ total_likes }}</span> like{{ total_likes|pluralize }}</span>
+          <span class="stat-badge">{{ total_views }} view{{ total_views|pluralize }}</span>
+          <a href="#"
+             data-id="{{ image.id }}"
+             data-action="{% if request.user in users_like %}un{% endif %}like"
+             class="like{% if request.user in users_like %} active{% endif %}">
+            {% if request.user in users_like %}Unlike{% else %}Like{% endif %}
+          </a>
+        </div>
+
+        {% if image.description %}
+          <p class="image-description">{{ image.description|linebreaks }}</p>
+        {% endif %}
+
+        {% if users_like %}
+          <div class="likers-section">
+            <h3>Liked by</h3>
+            <div class="likers-list">
+              {% for u in users_like %}
+                <div class="liker-item">
+                  {% if u.profile.photo %}
+                    <img src="{% thumbnail u.profile.photo 28x28 %}" alt="{{ u.username }}">
+                  {% endif %}
+                  <span>{{ u.first_name|default:u.username }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+
+      {% endwith %}
+    </div>
+
+  </div>
+{% endblock %}
+
+{% block domready %}
+  var likeUrl  = '{% url "images:like" %}';
+  var csrf     = '{{ csrf_token }}';
+
+  document.querySelectorAll('a.like').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      var data = new FormData();
+      data.append('csrfmiddlewaretoken', csrf);
+      data.append('id',     this.dataset.id);
+      data.append('action', this.dataset.action);
+      fetch(likeUrl, { method: 'POST', body: data })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.status === 'ok') {
+            var isLike = btn.dataset.action === 'like';
+            btn.dataset.action  = isLike ? 'unlike' : 'like';
+            btn.innerHTML       = isLike ? 'Unlike' : 'Like';
+            btn.classList.toggle('active', isLike);
+            var counter = document.querySelector('.total-likes');
+            if (counter) counter.textContent = data.total_likes;
+          }
+        });
+    });
+  });
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load thumbnail %}
+
+{% block title %}People{% endblock %}
+
+{% block content %}
+
+  <div class="page-header">
+    <h1>People</h1>
+    <span style="font-size:0.85rem;color:var(--text-muted)">{{ users|length }} member{{ users|length|pluralize }}</span>
+  </div>
+
+  <div class="people-grid">
+    {% for user in users %}
+      <div class="user-card">
+        <div class="user-avatar">
+          {% if user.profile.photo %}
+            <img src="{% thumbnail user.profile.photo 160x160 %}" alt="{{ user.username }}">
+          {% else %}
+            <div class="user-avatar placeholder"></div>
+          {% endif %}
+        </div>
+        <div class="user-name">
+          <a href="{% url 'user_detail' user.username %}">
+            {{ user.get_full_name|default:user.username }}
+          </a>
+        </div>
+      </div>
+    {% empty %}
+      <div class="empty-state" style="grid-column:1/-1">
+        <p>No users yet.</p>
+      </div>
+    {% endfor %}
+  </div>
+
+{% endblock %}

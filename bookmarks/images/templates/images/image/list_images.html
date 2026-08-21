@@ -1,0 +1,17 @@
+{% load thumbnail %}
+{% for image in images %}
+  <div class="image-card">
+    <a href="{{ image.get_absolute_url }}" class="img-wrap" style="display:block">
+      {% if image.image %}
+        <img src="{% thumbnail image.image 300x300 %}" alt="{{ image.title }}">
+      {% endif %}
+    </a>
+    <div class="card-body">
+      <div class="card-title">
+        <a href="{{ image.get_absolute_url }}">{{ image.title }}</a>
+      </div>
+    </div>
+  </div>
+{% empty %}
+  <p style="grid-column:1/-1;color:var(--text-muted);padding:1rem 0">No images bookmarked yet.</p>
+{% endfor %}

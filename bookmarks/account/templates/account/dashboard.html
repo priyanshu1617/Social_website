@@ -1,10 +1,151 @@
 {% extends "base.html" %}
+{% load thumbnail %}
 
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-  <h1>Dashboard</h1>
-  <p>
-    Welcome to your dashboard. You can <a href="{% url "edit" %}">edit your profile</a> or <a href="{% url "password_change" %}">change your password</a>.
-  </p>
+
+  {# ── Welcome Header ── #}
+  <div class="dash-header">
+    <div class="dash-greeting">
+      <h1>
+        Welcome back,
+        <span class="dash-name">{{ request.user.first_name|default:request.user.username }}</span>
+      </h1>
+      <p>Here's what's happening in your network</p>
+    </div>
+
+    <div class="dash-stats">
+      <div class="stat-pill">
+        <div>
+          <strong>{{ request.user.images_created.count }}</strong>
+          <small>Bookmarks</small>
+        </div>
+      </div>
+      <div class="stat-pill">
+        <div>
+          <strong>{{ request.user.following.count }}</strong>
+          <small>Following</small>
+        </div>
+      </div>
+      <div class="stat-pill">
+        <div>
+          <strong>{{ request.user.followers.count }}</strong>
+          <small>Followers</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# ── Main Two-Column Layout ── #}
+  <div class="dash-layout">
+
+    {# ── Left: My Recent Bookmarks ── #}
+    <div class="dash-main">
+      <h2 class="dash-section-title">My Recent Bookmarks</h2>
+
+      {% with recent_images=request.user.images_created.all|slice:":6" %}
+        {% if recent_images %}
+          <div id="image-list">
+            {% include "images/image/list_images.html" with images=recent_images %}
+          </div>
+          {% if request.user.images_created.count > 6 %}
+            <div style="margin-top:2.5rem; text-align:center;">
+              <a href="{% url 'images:list' %}" class="btn">
+                See all {{ request.user.images_created.count }} bookmarks →
+              </a>
+            </div>
+          {% endif %}
+        {% else %}
+          <div class="empty-state">
+            <h3>No bookmarks yet</h3>
+            <p>Use the bookmarklet tool to start saving your favorite images from the web.</p>
+          </div>
+        {% endif %}
+      {% endwith %}
+    </div>
+
+    {# ── Right: Sidebar ── #}
+    <div class="dash-sidebar">
+
+      {# Bookmarklet card #}
+      <div class="sidebar-card bmk-card">
+        <div class="bmk-card-header">
+          <div>
+            <h3>Bookmark it</h3>
+            <p>Drag to your browser toolbar to save images from any website.</p>
+          </div>
+        </div>
+        <a href="javascript:{% include "js/bookmarklet.js" %}" class="btn-bookmarklet-full">
+          Drag me to toolbar →
+        </a>
+      </div>
+
+      {# Quick Actions #}
+      <div class="sidebar-card">
+        <h3 class="sidebar-card-title">Quick Actions</h3>
+        <div class="quick-links">
+          <a href="{% url 'images:list' %}" class="quick-link">
+            Browse Images
+          </a>
+          <a href="{% url 'images:ranking' %}" class="quick-link">
+            View Rankings
+          </a>
+          <a href="{% url 'user_list' %}" class="quick-link">
+            Find People
+          </a>
+          <a href="{% url 'edit' %}" class="quick-link">
+            Edit Profile
+          </a>
+        </div>
+      </div>
+
+      {# Activity Feed (Moved to Sidebar) #}
+      <div class="sidebar-card" style="padding:0; overflow:hidden;">
+        <h3 class="sidebar-card-title" style="padding: 1.25rem 1.25rem 0; margin-bottom: 0;">Activity Feed</h3>
+        <div id="action-list" style="border:none; box-shadow:none;">
+          {% for action in actions %}
+            <div class="action" style="padding: 1.25rem; border-bottom: 1px solid var(--border);">
+              {# Avatar #}
+              <div class="action-avatar" style="width: 36px; height: 36px;">
+                {% if action.user.profile.photo %}
+                  <img src="{{ action.user.profile.photo.url }}" alt="{{ action.user.username }}">
+                {% else %}
+                  <span class="avatar-fallback" style="font-size:0.9rem;">
+                    {{ action.user.username|first|upper }}
+                  </span>
+                {% endif %}
+              </div>
+
+              {# Action body #}
+              <div class="action-body">
+                <p style="font-size:0.85rem;">
+                  <a href="{{ action.user.get_absolute_url }}" class="action-user">
+                    {{ action.user.get_full_name|default:action.user.username }}
+                  </a>
+                  <span class="action-verb-text">{{ action.verb }}</span>
+                  {% if action.target %}
+                    <a href="{{ action.target.get_absolute_url }}" class="action-target">
+                      {{ action.target }}
+                    </a>
+                  {% endif %}
+                </p>
+                <span class="action-time" style="font-size:0.75rem;">{{ action.created|timesince }} ago</span>
+              </div>
+            </div>
+          {% empty %}
+            <div class="empty-state" style="padding: 2.5rem 1.25rem;">
+              <h3 style="font-size:1.05rem;">No activity yet</h3>
+              <p style="font-size:0.85rem;">
+                <a href="{% url 'user_list' %}">Follow people</a> to see their activity.
+              </p>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+    </div>{# /sidebar #}
+
+  </div>{# /dash-layout #}
+
 {% endblock %}

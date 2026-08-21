@@ -1,11 +1,15 @@
 {% extends "base.html" %}
 
-{% block title %}Welcome{% endblock %}
+{% block title %}Account created{% endblock %}
 
 {% block content %}
-  <h1>Welcome {{ new_user.first_name }}!</h1>
-  <p>
-    Your account has been successfully created.
-    Now you can <a href="{% url "login" %}">log in</a>.
-  </p>
+<div class="auth-wrapper">
+  <div class="auth-card" style="text-align:center">
+    <h1>You're all set, {{ new_user.first_name|default:new_user.username }}!</h1>
+    <p class="subtitle">Your account was created successfully.</p>
+    <a href="{% url 'login' %}" class="button" style="width:100%;display:flex;justify-content:center;margin-top:1rem">
+      Sign in now →
+    </a>
+  </div>
+</div>
 {% endblock %}

@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% load thumbnail %}
+
+{% block title %}{{ user.get_full_name|default:user.username }}{% endblock %}
+
+{% block content %}
+
+  {% with total_followers=user.followers.count %}
+
+    <div class="profile-header">
+      <div class="profile-avatar {% if not user.profile.photo %}placeholder{% endif %}">
+        {% if user.profile.photo %}
+          <img src="{% thumbnail user.profile.photo 200x200 %}" alt="{{ user.username }}">
+        {% else %}
+          
+        {% endif %}
+      </div>
+
+      <div class="profile-meta">
+        <h1>{{ user.get_full_name|default:user.username }}</h1>
+        <p class="follower-count">
+          <strong>{{ total_followers }}</strong> follower{{ total_followers|pluralize }}
+        </p>
+        {% if user != request.user %}
+          <a href="#"
+             data-id="{{ user.id }}"
+             data-action="{% if request.user in user.followers.all %}un{% endif %}follow"
+             class="follow{% if request.user in user.followers.all %} active{% endif %}">
+            {% if request.user in user.followers.all %}✓ Following{% else %}+ Follow{% endif %}
+          </a>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="profile-images-section">
+      <h2>Bookmarked images</h2>
+      <div id="image-list">
+        {% include "images/image/list_images.html" with images=user.images_created.all %}
+      </div>
+    </div>
+
+  {% endwith %}
+
+{% endblock %}
+
+{% block domready %}
+  var followUrl = '{% url "user_follow" %}';
+  var csrf      = '{{ csrf_token }}';
+
+  document.querySelectorAll('a.follow').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      var data = new FormData();
+      data.append('csrfmiddlewaretoken', csrf);
+      data.append('id',     this.dataset.id);
+      data.append('action', this.dataset.action);
+      fetch(followUrl, { method: 'POST', body: data })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.status === 'ok') {
+            var isFollow = btn.dataset.action === 'follow';
+            btn.dataset.action  = isFollow ? 'unfollow' : 'follow';
+            btn.innerHTML       = isFollow ? '✓ Following' : '+ Follow';
+            btn.classList.toggle('active', isFollow);
+          }
+        });
+    });
+  });
+{% endblock %}
